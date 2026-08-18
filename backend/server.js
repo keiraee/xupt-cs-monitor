@@ -110,15 +110,39 @@ function cleanContent(rawHtml) {
   });
 
   // remove old-site layout tables
+  // Only match tables that are CLEARLY navigation/header/footer chrome
+  // Use multiple signals to avoid false positives on content tables
   $c("table").each((_, tbl) => {
     const tHtml = $c(tbl).html() || "";
-    if (
-      tHtml.includes("xiyoucs") || tHtml.includes("首 页</a>") ||
-      tHtml.includes("学院概况</a>") || tHtml.includes("dhl.jpg") ||
-      tHtml.includes("LibraryItem") || tHtml.includes("daohanglan") ||
-      tHtml.includes("footbg") || tHtml.includes("版权所有") ||
-      tHtml.includes("222.24.19.3")
-    ) $c(tbl).remove();
+    // Must match at least 2 of these patterns to be considered chrome
+    const signals = [
+      tHtml.includes("dhl.jpg"),
+      tHtml.includes("LibraryItem"),
+      tHtml.includes("daohanglan"),
+      tHtml.includes("footbg"),
+      tHtml.includes("版权所有") && tHtml.includes("西安邮电大学") && !tHtml.includes("href="),
+      tHtml.includes("首 页</a>") && tHtml.includes("学院概况</a>"),
+    ];
+    const matchCount = signals.filter(Boolean).length;
+    // Also match if it has nav patterns (layout table with navigation links)
+    const hasNav = tHtml.includes("首 页</a>") && tHtml.includes("学院概况</a>") && tHtml.includes("本科教育");
+    if (matchCount >= 1 || hasNav) $c(tbl).remove();
+  });
+
+  // fix old IP address in ALL href/src attributes (222.24.19.3 → cs.xupt.edu.cn)
+  $c("[href]").each((_, el) => {
+    let href = $c(el).attr("href") || "";
+    if (href.includes("222.24.19.3")) {
+      href = href.replace(/http:\/\/222\.24\.19\.3(?::\d+)?/g, "https://cs.xupt.edu.cn");
+      $c(el).attr("href", href);
+    }
+  });
+  $c("[src]").each((_, el) => {
+    let src = $c(el).attr("src") || "";
+    if (src.includes("222.24.19.3")) {
+      src = src.replace(/http:\/\/222\.24\.19\.3(?::\d+)?/g, "https://cs.xupt.edu.cn");
+      $c(el).attr("src", src);
+    }
   });
 
   // remove chrome images
