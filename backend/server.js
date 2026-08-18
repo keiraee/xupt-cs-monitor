@@ -137,13 +137,15 @@ function cleanContent(rawHtml) {
   // mark file attachments (links to PDF, DOC, ZIP, etc.)
   $c("a").each((_, a) => {
     const href = $c(a).attr("href") || "";
-    if (/\.(pdf|doc|docx|xls|xlsx|zip|rar|ppt|pptx|txt|csv)(\?|$)/i.test(href)) {
+    if (/\.(pdf|doc|docx|xls|xlsx|zip|rar|ppt|pptx|txt|csv|gif)(\?|$)/i.test(href)) {
       let absHref = href;
       if (href.startsWith("/")) absHref = `${BASE}${href}`;
       else if (!href.startsWith("http")) absHref = new URL(href, `${BASE}/`).href;
       $c(a).attr("href", absHref);
       $c(a).addClass("file-attachment");
       $c(a).attr("data-download-url", absHref);
+      // remove icon images inside attachment links (the original site uses gif icons)
+      $c(a).find("img").remove();
     }
   });
 
